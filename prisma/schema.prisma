@@ -1,0 +1,280 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  enrollments    Enrollment[]
+  testAttempts   TestAttempt[]
+  customQuizzes  CustomQuiz[]
+  quizAttempts   QuizAttempt[]
+
+  @@map("users")
+}
+
+model Exam {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // UPSC, Banking, IIT JEE, NEET, CAT
+  duration    Int      // in minutes
+  totalMarks  Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  subjects    Subject[]
+  enrollments Enrollment[]
+
+  @@map("exams")
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  examId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  exam        Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topics      Topic[]
+  testPapers  TestPaper[]
+
+  @@map("subjects")
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  subjectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  subject     Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions   Question[]
+
+  @@map("topics")
+}
+
+model TestPaper {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  duration    Int      // in minutes
+  totalMarks  Int
+  isActive    Boolean  @default(true)
+  subjectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  sections    Section[]
+  attempts    TestAttempt[]
+
+  @@map("test_papers")
+}
+
+model Section {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int?     // in minutes, null means no time limit
+  totalMarks  Int
+  testPaperId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  testPaper   TestPaper   @relation(fields: [testPaperId], references: [id], onDelete: Cascade)
+  questions   Question[]
+
+  @@map("sections")
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  question    String
+  type        QuestionType @default(MULTIPLE_CHOICE)
+  marks       Int          @default(1)
+  difficulty  Difficulty   @default(MEDIUM)
+  explanation String?
+  topicId     String
+  sectionId   String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  section     Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  options     Option[]
+  answers     Answer[]
+  quizAnswers QuizAnswer[]
+
+  @@map("questions")
+}
+
+model Option {
+  id         String  @id @default(cuid())
+  text       String
+  isCorrect  Boolean @default(false)
+  questionId String
+
+  // Relations
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("options")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  examId    String
+  enrolledAt DateTime @default(now())
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam      Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, examId])
+  @@map("enrollments")
+}
+
+model TestAttempt {
+  id           String   @id @default(cuid())
+  userId       String
+  testPaperId  String
+  startedAt    DateTime @default(now())
+  submittedAt  DateTime?
+  timeSpent    Int?     // in minutes
+  totalMarks   Int      @default(0)
+  obtainedMarks Int     @default(0)
+  percentage   Float    @default(0)
+  rank         Int?
+  isCompleted  Boolean  @default(false)
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testPaper    TestPaper    @relation(fields: [testPaperId], references: [id], onDelete: Cascade)
+  answers      Answer[]
+
+  @@map("test_attempts")
+}
+
+model Answer {
+  id             String   @id @default(cuid())
+  testAttemptId  String
+  questionId     String
+  selectedOption String?  // For MCQ
+  textAnswer     String?  // For text answers
+  isCorrect      Boolean  @default(false)
+  marksObtained  Int      @default(0)
+  timeSpent      Int?     // in seconds
+  isMarked       Boolean  @default(false) // For review
+
+  // Relations
+  testAttempt    TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([testAttemptId, questionId])
+  @@map("answers")
+}
+
+model CustomQuiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  subjectIds  String[] // Array of subject IDs
+  topicIds    String[] // Array of topic IDs
+  questionCount Int
+  duration    Int      // in minutes
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts    QuizAttempt[]
+
+  @@map("custom_quizzes")
+}
+
+model QuizAttempt {
+  id           String   @id @default(cuid())
+  userId       String
+  customQuizId String
+  startedAt    DateTime @default(now())
+  submittedAt  DateTime?
+  timeSpent    Int?     // in minutes
+  totalMarks   Int      @default(0)
+  obtainedMarks Int     @default(0)
+  percentage   Float    @default(0)
+  isCompleted  Boolean  @default(false)
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customQuiz   CustomQuiz   @relation(fields: [customQuizId], references: [id], onDelete: Cascade)
+  answers      QuizAnswer[]
+
+  @@map("quiz_attempts")
+}
+
+model QuizAnswer {
+  id             String   @id @default(cuid())
+  quizAttemptId  String
+  questionId     String
+  selectedOption String?
+  textAnswer     String?
+  isCorrect      Boolean  @default(false)
+  marksObtained  Int      @default(0)
+  timeSpent      Int?
+
+  // Relations
+  quizAttempt    QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
+  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([quizAttemptId, questionId])
+  @@map("quiz_answers")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  TRUE_FALSE
+  FILL_IN_BLANK
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
