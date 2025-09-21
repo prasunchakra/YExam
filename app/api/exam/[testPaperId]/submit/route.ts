@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { testPaperId: string } }
+  { params }: { params: Promise<{ testPaperId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function POST(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const testPaperId = params.testPaperId;
+    const { testPaperId } = await params;
     const { answers, timeSpent } = await request.json();
 
     const userId = session.user.id;
@@ -55,7 +55,7 @@ export async function POST(
 
     // Process answers and calculate scores
     const answerRecords = [];
-    for (const [questionId, selectedOptionId] of Object.entries(answers)) {
+    for (const [questionId, selectedOptionId] of Object.entries(answers as Record<string, string>)) {
       const question = testPaper.sections
         .flatMap(section => section.questions)
         .find(q => q.id === questionId);

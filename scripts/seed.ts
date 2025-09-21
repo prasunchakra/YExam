@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, QuestionType, Difficulty } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -209,9 +209,9 @@ async function main() {
     {
       id: 'q1',
       question: 'Who was the first Governor-General of India?',
-      type: 'MULTIPLE_CHOICE',
+      type: QuestionType.MULTIPLE_CHOICE,
       marks: 2,
-      difficulty: 'EASY',
+      difficulty: Difficulty.EASY,
       explanation: 'Warren Hastings was the first Governor-General of India from 1773 to 1785.',
       topicId: historyTopic.id,
       sectionId: upscSection.id,
@@ -225,9 +225,9 @@ async function main() {
     {
       id: 'q2',
       question: 'Which is the longest river in India?',
-      type: 'MULTIPLE_CHOICE',
+      type: QuestionType.MULTIPLE_CHOICE,
       marks: 2,
-      difficulty: 'EASY',
+      difficulty: Difficulty.EASY,
       explanation: 'The Ganges is the longest river in India with a length of 2,525 km.',
       topicId: geographyTopic.id,
       sectionId: upscSection.id,
@@ -241,9 +241,9 @@ async function main() {
     {
       id: 'q3',
       question: 'If 2x + 3 = 11, what is the value of x?',
-      type: 'MULTIPLE_CHOICE',
+      type: QuestionType.MULTIPLE_CHOICE,
       marks: 2,
-      difficulty: 'MEDIUM',
+      difficulty: Difficulty.MEDIUM,
       explanation: '2x + 3 = 11, so 2x = 8, therefore x = 4.',
       topicId: arithmetic.id,
       sectionId: bankingSection.id,
@@ -257,9 +257,9 @@ async function main() {
     {
       id: 'q4',
       question: 'Complete the series: 2, 4, 8, 16, ?',
-      type: 'MULTIPLE_CHOICE',
+      type: QuestionType.MULTIPLE_CHOICE,
       marks: 2,
-      difficulty: 'EASY',
+      difficulty: Difficulty.EASY,
       explanation: 'Each number is multiplied by 2, so 16 × 2 = 32.',
       topicId: verbalReasoning.id,
       sectionId: bankingSection.id,
