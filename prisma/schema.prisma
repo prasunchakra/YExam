@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   name      String?
   password  String
@@ -24,12 +24,10 @@ model User {
   testAttempts   TestAttempt[]
   customQuizzes  CustomQuiz[]
   quizAttempts   QuizAttempt[]
-
-  @@map("users")
 }
 
 model Exam {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
   category    String   // UPSC, Banking, IIT JEE, NEET, CAT
@@ -42,129 +40,114 @@ model Exam {
   // Relations
   subjects    Subject[]
   enrollments Enrollment[]
-
-  @@map("exams")
 }
 
 model Subject {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
-  examId      String
+  examId      String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  exam        Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  exam        Exam         @relation(fields: [examId], references: [id])
   topics      Topic[]
   testPapers  TestPaper[]
-
-  @@map("subjects")
 }
 
 model Topic {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
-  subjectId   String
+  subjectId   String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  subject     Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject     Subject     @relation(fields: [subjectId], references: [id])
   questions   Question[]
-
-  @@map("topics")
 }
 
 model TestPaper {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   duration    Int      // in minutes
   totalMarks  Int
   isActive    Boolean  @default(true)
-  subjectId   String
+  subjectId   String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject     Subject      @relation(fields: [subjectId], references: [id])
   sections    Section[]
   attempts    TestAttempt[]
-
-  @@map("test_papers")
 }
 
 model Section {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
   duration    Int?     // in minutes, null means no time limit
   totalMarks  Int
-  testPaperId String
+  testPaperId String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  testPaper   TestPaper   @relation(fields: [testPaperId], references: [id], onDelete: Cascade)
+  testPaper   TestPaper   @relation(fields: [testPaperId], references: [id])
   questions   Question[]
-
-  @@map("sections")
 }
 
 model Question {
-  id          String       @id @default(cuid())
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
   question    String
   type        QuestionType @default(MULTIPLE_CHOICE)
   marks       Int          @default(1)
   difficulty  Difficulty   @default(MEDIUM)
   explanation String?
-  topicId     String
-  sectionId   String
+  topicId     String       @db.ObjectId
+  sectionId   String       @db.ObjectId
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   // Relations
-  topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  section     Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  topic       Topic        @relation(fields: [topicId], references: [id])
+  section     Section      @relation(fields: [sectionId], references: [id])
   options     Option[]
   answers     Answer[]
   quizAnswers QuizAnswer[]
-
-  @@map("questions")
 }
 
 model Option {
-  id         String  @id @default(cuid())
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
   text       String
   isCorrect  Boolean @default(false)
-  questionId String
+  questionId String  @db.ObjectId
 
   // Relations
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@map("options")
+  question   Question @relation(fields: [questionId], references: [id])
 }
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  examId    String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  examId    String   @db.ObjectId
   enrolledAt DateTime @default(now())
 
   // Relations
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam      Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id])
+  exam      Exam @relation(fields: [examId], references: [id])
 
   @@unique([userId, examId])
-  @@map("enrollments")
 }
 
 model TestAttempt {
-  id           String   @id @default(cuid())
-  userId       String
-  testPaperId  String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  testPaperId  String   @db.ObjectId
   startedAt    DateTime @default(now())
   submittedAt  DateTime?
   timeSpent    Int?     // in minutes
@@ -175,17 +158,15 @@ model TestAttempt {
   isCompleted  Boolean  @default(false)
 
   // Relations
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  testPaper    TestPaper    @relation(fields: [testPaperId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+  testPaper    TestPaper    @relation(fields: [testPaperId], references: [id])
   answers      Answer[]
-
-  @@map("test_attempts")
 }
 
 model Answer {
-  id             String   @id @default(cuid())
-  testAttemptId  String
-  questionId     String
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  testAttemptId  String   @db.ObjectId
+  questionId     String   @db.ObjectId
   selectedOption String?  // For MCQ
   textAnswer     String?  // For text answers
   isCorrect      Boolean  @default(false)
@@ -194,20 +175,19 @@ model Answer {
   isMarked       Boolean  @default(false) // For review
 
   // Relations
-  testAttempt    TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
-  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  testAttempt    TestAttempt @relation(fields: [testAttemptId], references: [id])
+  question       Question    @relation(fields: [questionId], references: [id])
 
   @@unique([testAttemptId, questionId])
-  @@map("answers")
 }
 
 model CustomQuiz {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
-  userId      String
-  subjectIds  String[] // Array of subject IDs
-  topicIds    String[] // Array of topic IDs
+  userId      String   @db.ObjectId
+  subjectIds  String[] @db.ObjectId // Array of subject IDs
+  topicIds    String[] @db.ObjectId // Array of topic IDs
   questionCount Int
   duration    Int      // in minutes
   isActive    Boolean  @default(true)
@@ -215,16 +195,14 @@ model CustomQuiz {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id])
   attempts    QuizAttempt[]
-
-  @@map("custom_quizzes")
 }
 
 model QuizAttempt {
-  id           String   @id @default(cuid())
-  userId       String
-  customQuizId String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  customQuizId String   @db.ObjectId
   startedAt    DateTime @default(now())
   submittedAt  DateTime?
   timeSpent    Int?     // in minutes
@@ -234,17 +212,15 @@ model QuizAttempt {
   isCompleted  Boolean  @default(false)
 
   // Relations
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  customQuiz   CustomQuiz   @relation(fields: [customQuizId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+  customQuiz   CustomQuiz   @relation(fields: [customQuizId], references: [id])
   answers      QuizAnswer[]
-
-  @@map("quiz_attempts")
 }
 
 model QuizAnswer {
-  id             String   @id @default(cuid())
-  quizAttemptId  String
-  questionId     String
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  quizAttemptId  String   @db.ObjectId
+  questionId     String   @db.ObjectId
   selectedOption String?
   textAnswer     String?
   isCorrect      Boolean  @default(false)
@@ -252,11 +228,10 @@ model QuizAnswer {
   timeSpent      Int?
 
   // Relations
-  quizAttempt    QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
-  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  quizAttempt    QuizAttempt @relation(fields: [quizAttemptId], references: [id])
+  question       Question    @relation(fields: [questionId], references: [id])
 
   @@unique([quizAttemptId, questionId])
-  @@map("quiz_answers")
 }
 
 enum Role {
