@@ -21,7 +21,7 @@ A comprehensive mock exam platform built with Next.js, designed for students pre
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: MongoDB with Prisma ORM
 - **Authentication**: NextAuth.js
 - **Charts**: Recharts
 - **Icons**: Lucide React
@@ -31,7 +31,7 @@ A comprehensive mock exam platform built with Next.js, designed for students pre
 ### Prerequisites
 
 - Node.js 18+ 
-- PostgreSQL database
+- MongoDB database
 - npm or yarn
 
 ### Installation
@@ -51,7 +51,7 @@ A comprehensive mock exam platform built with Next.js, designed for students pre
    Create a `.env.local` file in the root directory:
    ```env
    # Database
-   DATABASE_URL="postgresql://username:password@localhost:5432/yexam?schema=public"
+   DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/yexam_db?retryWrites=true&w=majority"
    
    # NextAuth.js
    NEXTAUTH_URL="http://localhost:3000"
@@ -204,7 +204,7 @@ npx prisma migrate dev --name migration-name
 
 Make sure to set these environment variables in your production environment:
 
-- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_URL` - MongoDB connection string
 - `NEXTAUTH_URL` - Your production URL
 - `NEXTAUTH_SECRET` - A secure random string
 - `NEXT_PUBLIC_APP_URL` - Your production URL
